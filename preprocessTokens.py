@@ -50,6 +50,7 @@ def extract_words(flickrId):
 				ls = ls[1:]
 			for x in ls:
 				xs = x.split("_")
+				# TOFIX: passare a lemmatize() un secondo parametro (pos='v' [|n|a|r])
 				xs = [lemmatizer.lemmatize(xs_el) for xs_el in xs]
 				xs = [xs_el for xs_el in xs if not xs_el in stop_words]
 				#In questo punto estrai la part of speech considerando gli elementi di xs
