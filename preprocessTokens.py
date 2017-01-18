@@ -1,4 +1,4 @@
-from sklearn.feature_extraction.text import CountVectorizer  #  <<----- usato per BoW
+from sklearn.feature_extraction.text import CountVectorizer 
 
 # Per ogni immagine nel db: estrae tutti i dati testuali, applica una procedura di preprocessing (lemmatizing, stop word removal, positional tagging) e salva in 'preprocessedTokens' in formato JSON.
 
