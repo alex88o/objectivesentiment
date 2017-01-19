@@ -100,7 +100,7 @@ def extract_words(flickrId):
 
 #	print "pos:\t"+ str(p) + "\tobj:\t" + str(o)+ "\tneg:\t" + str(n)
 
-	return out,
+	return out
 
 
 
