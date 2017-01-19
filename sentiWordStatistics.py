@@ -1,4 +1,9 @@
 # How many images have a flat zero (i.e., all zero values) in their senti representation with sentiVoc.json?
+# You can change the behaviour of this script by the parameter n
+
+# Usage:	python 	sentiWordStatistics.py	n
+#		n:	max number of words to have a flat representation 
+
 
 import sqlite3 as lite
 import sys, json, pprint
@@ -8,7 +13,8 @@ from nltk.corpus import wordnet
 project_root	=	'/home/aortis/SentimentAnalysis/'
 tokens_dir	=	'preprocessedTokens/'
 db_path		=	project_root + 'flickrCrawling/flickrCrossSentiment.db'
-#corpus_name	=	'extractedWords.txt'
+
+n = int(sys.argv[1])
 
 #  Debug options
 DEBUG = False
@@ -33,14 +39,21 @@ cur.execute("SELECT FlickrId FROM Image")
 rows = cur.fetchall()
 
 lemmatizer = WordNetLemmatizer()
-corpus_file = open(corpus_name,'w')
 
-first_word = True
+fV = open('sentiVoc.json')
+txt_V = fV.read()
+fV.close()
+
+senti_V = json.loads(txt_V)
+senti_Set = set(senti_V)
+
+count = 0
+idx_single_words =[]
 for img_idx, id in enumerate(rows):
-	if DEBUG and D_ID:
-		id = rows[D_ID]
 
-	print "\n\nProcessing text from image\t" + str(id[0]) + "\t" + str(img_idx) + "/" + str(len(rows))
+#	print "\n\nProcessing text from image\t" + str(id[0]) + "\t" + str(img_idx) + "/" + str(len(rows))
+
+	ass_words = [] # list of image's associated words
 
 	fname = tokens_dir + str(id[0]) + ".json"
 	f = open(fname,'r')
@@ -61,7 +74,7 @@ for img_idx, id in enumerate(rows):
 	pool = [google_data, mvso_data, places_data, neuraltalk]
 	
 	for s_idx,source in enumerate(pool):
-		print "\n"
+#		print "\n"
 		for t_idx,token in enumerate(source):
 			word	=	token[0].lower()
 			tag	=	token[1]
@@ -91,14 +104,31 @@ for img_idx, id in enumerate(rows):
 
 			if tag in ['IN','WP','CC','DT','PRP','FW','WRB']:
 #				continue	#ignoring prepositions, Wh-pronouns, coordinating conjunctions
-				print "Ignoring tag " + tag +" for the word\t" + word + "\t(press to continue)"
+#				print "Ignoring tag " + tag +" for the word\t" + word + "\t(press to continue)"
 #				_ = raw_input()
 				pos_tag = 'n'   # as default
 			else:
 				pos_tag = commuteTag(tag)
 			lemma = lemmatizer.lemmatize(word, pos_tag)
 
-			if len(word)<4:
-				print word + "("+tag+")\t\t->\t" + lemma + "("+pos_tag+")"
-			else:
-				print word + "("+tag+")\t->\t" + lemma + "("+pos_tag+")"
+			ass_words.append(lemma)
+
+	#Compare ass_words with senti vocabulary
+	ass_Set = set(ass_words)
+	
+	
+	intersect = ass_Set & senti_Set
+	if len(intersect) < n:
+		count +=1
+		if n == 2:	#look for only 1 word set
+			for w_idx, w in enumerate(senti_V):
+				if w in intersect:
+					idx_single_words.append(w_idx)
+					val = ass_words.count(w)	# count value of that bin in the BoW representation
+					print "Found\t"+w+"\tin\t"+str(w_idx)+"\tvalue:\t"+str(val)
+
+if n == 2:
+	single_Set = set(idx_single_words)
+	print "Images with similar representations:\t"+ str(len(idx_single_words)-len(single_Set))
+
+print "Null representation images (images with less than "+str(n)+" voc. words):\t" + str(count)

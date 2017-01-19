@@ -127,10 +127,10 @@ for img_idx, id in enumerate(rows):
 
 			#Add word to corpus
 			if first_word:
-				corpus_file.write(word)
+				corpus_file.write(lemma)
 				first_word = False
 			else:
-				corpus_file.write(" "+word)
+				corpus_file.write(" "+lemma)
 
 #	if DEBUG:
 #		sys.exit(0)
