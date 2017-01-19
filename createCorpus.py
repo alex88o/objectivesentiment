@@ -98,8 +98,8 @@ for img_idx, id in enumerate(rows):
 				else:
 					tag = 'NN'
 
-			if word in ['hat','window']:  #special cases (snow, kite := FW)
-				tag = 'NN'
+			#if word in ['hat','window']:  #special cases (snow, kite := FW)
+			#	tag = 'NN'
 
 #			if word in ['wooden']:
 		#		tag = 'JJ'			
