@@ -1,10 +1,82 @@
 from sklearn.feature_extraction.text import CountVectorizer 
 
-
+import json
 from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
 from nltk.corpus import stopwords, sentiwordnet as swn
-stop_words = set(stopwords.words('english'))
 
+stop_words = set(stopwords.words('english'))
+lemmatizer = WordNetLemmatizer()
+
+
+def get_normalized_text(FlickrID, tokens_dir):
+
+	fname = tokens_dir + str(FlickrID) + ".json"
+	f = open(fname,'r')
+
+	obj = f.read()
+	obj = json.loads(obj)
+	obj = obj[0]
+	f.close()
+
+	#NB: applico lemmatizing perche' nel preprocessing mancava un parametro
+	google_data	=	obj['googlenet']
+	mvso_data	=	obj['mvsoenglish']
+	places_data	=	obj['places205']
+	neuraltalk		=	obj['description']
+
+	pool = [google_data, mvso_data, places_data, neuraltalk]
+	
+	associated_norm_words = []
+	
+	for s_idx,source in enumerate(pool):
+	#	print "\n"
+		for t_idx,token in enumerate(source):
+			word	=	token[0].lower()
+			tag	=	token[1]
+
+			if "'" in word:			# e.g.,  jeweller's
+				word = word[:-2]
+
+			# these if statements correct ANP tagging when the adjective is tagged as preposition
+			if s_idx == 1:	#mvsoenglish
+				if t_idx % 2 == 0:
+					tag = 'JJ'
+				else:
+					tag = 'NN'
+
+			if tag == 'CD':
+				continue	#CD: cardinal number
+
+#			if tag in ['IN','WP','CC','DT','PRP','FW','WRB']:
+#				pos_tag = 'n'   # as default
+#			else:
+			#	pos_tag = commuteTag(tag)
+			
+			#commented if statement handled by the commuteTag function
+			pos_tag = commuteTag(tag)
+			lemma = lemmatizer.lemmatize(word, pos_tag)
+			
+			# Now the word "lemma" is in the same form as in the vocabulary
+			associated_norm_words.append(lemma)
+
+	return associated_norm_words
+
+
+
+def commuteTag(treebank_tag):
+	
+	if treebank_tag.startswith('J'):
+		return wordnet.ADJ
+	elif treebank_tag.startswith('V'):
+		return wordnet.VERB
+	elif treebank_tag.startswith('N'):
+		return wordnet.NOUN
+	elif treebank_tag.startswith('R'):
+		return wordnet.ADV
+	else:
+		return 'n'
+		
 
 def extract_single_senti_scores(word):
 	pscore = 0
