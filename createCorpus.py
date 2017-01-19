@@ -15,7 +15,7 @@ corpus_name	=	'extractedWords.txt'
 DEBUG = False
 D_ID = None
 
-
+# EDIT: move this function to utils.py
 def commuteTag(treebank_tag):
 	
 	"""
@@ -46,7 +46,7 @@ def commuteTag(treebank_tag):
 	elif treebank_tag.startswith('R'):
 		return wordnet.ADV
 	else:
-		return ''
+		return 'n'
 		
 con = lite.connect(db_path)
 cur = con.cursor()

@@ -5,17 +5,33 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords, sentiwordnet as swn
 stop_words = set(stopwords.words('english'))
 
+
+def extract_single_senti_scores(word):
+	pscore = 0
+	nscore = 0
+	objscore = 0
+	
+	if len(swn.senti_synsets(word))>0:
+		s_scores = list(swn.senti_synsets(word))[0]
+		pscore	= s_scores.pos_score()
+		objscore= s_scores.obj_score()
+		nscore	= s_scores.neg_score()
+
+	return pscore, nscore, objscore
+
+
 def extract_senti_scores(tagged):
 	pscore = 0
 	nscore = 0
 	objscore = 0
+
 	for i in range(0,len(tagged)):
 		print "evaluating\t" +tagged[i][0]
 		p = o = n = 0
 		if 'NN' in tagged[i][1] and len(swn.senti_synsets(tagged[i][0],'n'))>0:
 			p = list(swn.senti_synsets(tagged[i][0],'n'))[0].pos_score()
 			o = list(swn.senti_synsets(tagged[i][0],'n'))[0].obj_score()
-			n =  list(swn.senti_synsets(tagged[i][0],'n'))[0].neg_score()
+			n = list(swn.senti_synsets(tagged[i][0],'n'))[0].neg_score()
 		
 			pscore+=(list(swn.senti_synsets(tagged[i][0],'n'))[0]).pos_score() #positive score of a word
 			nscore+=(list(swn.senti_synsets(tagged[i][0],'n'))[0]).neg_score()  #negative score of a word
