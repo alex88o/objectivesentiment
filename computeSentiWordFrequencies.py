@@ -182,32 +182,32 @@ for img_idx, id in enumerate(rows):
 
 	if n>0:
 		sentence_influence = abs(posS - negS)/n
-	
-		print "+"+str(posS)+"\t-"+str(negS)+"\t\tinfluence:\t"+ str(sentence_influence)
-		print "Sentence polarity:\t"+ str(is_positive)
+	else:
+		sentence_influence = 0
+
+	print "+"+str(posS)+"\t-"+str(negS)+"\t\tinfluence:\t"+ str(sentence_influence)
+	print "Sentence polarity:\t"+ str(is_positive)
 		
-		# Step 5: if the threshold condition is satisified, increment the occurrences of each word in the vocabulary 
-		for w in norm_text:
-			word_idx = V.index(w)
-		#	print w
-		#	pprint.pprint(freq_vectors[word_idx])
-			freq_vectors[word_idx][0] += 1
-		#	pprint.pprint(freq_vectors[word_idx])
-		#	_ = raw_input()
-			if sentence_influence >= th_sentence:
-				if is_positive:
-					freq_vectors[word_idx][1] += 1	# increment the frequency of word w in a positive sentence
-				else:
-					freq_vectors[word_idx][2] += 1  # increment the frequency of word w in a negative sentence
+
+	# Step 5: if the threshold condition is satisified, increment the occurrences of each word in the vocabulary 
+	for w in norm_text:
+		word_idx = V.index(w)
+	#	print w
+	#	pprint.pprint(freq_vectors[word_idx])
+		freq_vectors[word_idx][0] += 1
+	#	pprint.pprint(freq_vectors[word_idx])
+	#	_ = raw_input()
+		if sentence_influence >= th_sentence:
+			if is_positive:
+				freq_vectors[word_idx][1] += 1	# increment the frequency of word w in a positive sentence
+			else:
+				freq_vectors[word_idx][2] += 1  # increment the frequency of word w in a negative sentence
 		#		print "Incremented:\t"+w
 		#		print freq_vectors[word_idx]
 		#		_ = raw_input()
 
 # Step 6: store the frequences for the word in the vocabulary
 
-print V[0]
-print V[1000]
-print V[-1]
 pprint.pprint(freq_vectors[0])
 pprint.pprint(freq_vectors[1000])
 pprint.pprint(freq_vectors[-1])
