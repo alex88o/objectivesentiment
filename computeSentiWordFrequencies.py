@@ -4,6 +4,7 @@
 
 import sqlite3 as lite
 import json
+import pprint
 from utils import commuteTag, get_normalized_text, extract_single_senti_scores
 import nltk, sys
 from nltk import word_tokenize
@@ -121,15 +122,36 @@ def sentenceSentiment(sentence):
 
 	P_sum = 0
 	N_sum = 0
+	nSentiWords = 0
 	for w in sentence:
 		pos, neg, obj = extract_single_senti_scores(w)
-		P_sum += pos
-		N_sum += neg
-		
-	return P_sum, N_sum
+		#print w+"\t(+"+str(pos)+", -"+str(neg)+")"
+		if pos>obj or neg>obj:
+			P_sum += pos
+			N_sum += neg
+			nSentiWords += 1
+
+	return P_sum, N_sum, nSentiWords
 	
 	
 	
+def initialize_freq_vectors(V):
+	freq = []
+	for w in V:
+		freq.append([0,0,0])
+	return freq
+
+# Load the vocabulary
+
+fnameV = 'textVoc.json'
+fV = open(fnameV,'r')
+V = json.loads(fV.read())
+fV.close()
+
+# Each element is a list of three values (fri, psi, nsi) corresponding to word frequences in the dataset, in positive and negative sentences.
+# To obtain the number of word occurrences in sentiment sentences just sum psi and nsi.
+freq_vectors = initialize_freq_vectors(V)
+
 set_con = lite.connect(db_path)
 set_cur = set_con.cursor()
 set_cur.execute("SELECT FlickrId FROM Image")
@@ -144,21 +166,54 @@ for img_idx, id in enumerate(rows):
 	# Step 3: extract and normalize associated text (i.e., lemmatize, etc.)
 	norm_text = get_normalized_text(id[0], tokens_dir)
 	
-	print norm_text
+#	print norm_text
 	
 	# Step 4: determine the sentence sentiment and apply negation
-	norm_text = list(set(norm_text)) #remove duplicates
-	posS, negS = sentenceSentiment(norm_text)
+	norm_text = list(set(norm_text)) # do not remove duplicates since we have more and different text sources for each image
+	posS, negS, nSentiWords = sentenceSentiment(norm_text)
 	
 	# True if the sentence sentiment is positive ( ^ defines the XOR)
 	is_positive = (posS>negS) ^ NEG
 
-	print "Sentence polarity:\t"+ str(is_positive)
-	_ = raw_input()
+	#Consider all the sentence words
+	n = len(norm_text)
+	#Consider only the sentiment words
+	n = nSentiWords
+
+	if n>0:
+		sentence_influence = abs(posS - negS)/n
 	
-	# Step 5: if the threshold condition is satisified,  increment the occurrences of each word in the vocabulary 
-	
+		print "+"+str(posS)+"\t-"+str(negS)+"\t\tinfluence:\t"+ str(sentence_influence)
+		print "Sentence polarity:\t"+ str(is_positive)
+		
+		# Step 5: if the threshold condition is satisified, increment the occurrences of each word in the vocabulary 
+		for w in norm_text:
+			word_idx = V.index(w)
+		#	print w
+		#	pprint.pprint(freq_vectors[word_idx])
+			freq_vectors[word_idx][0] += 1
+		#	pprint.pprint(freq_vectors[word_idx])
+		#	_ = raw_input()
+			if sentence_influence >= th_sentence:
+				if is_positive:
+					freq_vectors[word_idx][1] += 1	# increment the frequency of word w in a positive sentence
+				else:
+					freq_vectors[word_idx][2] += 1  # increment the frequency of word w in a negative sentence
+		#		print "Incremented:\t"+w
+		#		print freq_vectors[word_idx]
+		#		_ = raw_input()
 
 # Step 6: store the frequences for the word in the vocabulary
 
+print V[0]
+print V[1000]
+print V[-1]
+pprint.pprint(freq_vectors[0])
+pprint.pprint(freq_vectors[1000])
+pprint.pprint(freq_vectors[-1])
+
+new_fname = 'freqVectors.json'
+f = open(new_fname,'w')
+f.write(json.dumps(freq_vectors))
+f.close()
 	
