@@ -166,7 +166,9 @@ for img_idx, id in enumerate(rows):
 	# Step 3: extract and normalize associated text (i.e., lemmatize, etc.)
 	norm_text = get_normalized_text(id[0], tokens_dir)
 	
-#	print norm_text
+	print "Normalized text:"
+	print norm_text
+	sys.exit(0)
 	
 	# Step 4: determine the sentence sentiment and apply negation
 	norm_text = list(set(norm_text)) # do not remove duplicates since we have more and different text sources for each image

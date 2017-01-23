@@ -116,19 +116,22 @@ for img_idx, id in enumerate(rows):
 	#Compare ass_words with senti vocabulary
 	ass_Set = set(ass_words)
 	
-	
+	#Intersection between vocabulary and words associated to the image
 	intersect = ass_Set & senti_Set
-	if len(intersect) < n:
+	if len(intersect) < n:	#counts the number of images with a number of associated words lower than n
 		count +=1
-		if n == 2:	#look for only 1 word set
+		if n == 2:	#insert into idx_single_words the words which are used as a 1-hot like representation
 			for w_idx, w in enumerate(senti_V):
 				if w in intersect:
 					idx_single_words.append(w_idx)
 					val = ass_words.count(w)	# count value of that bin in the BoW representation
 					print "Found\t"+w+"\tin\t"+str(w_idx)+"\tvalue:\t"+str(val)
 
+# if n == 2 the number of non unique 'single words' give us the amount of images with similar 1-hot like representation, hence the discriminative lacks of if
 if n == 2:
 	single_Set = set(idx_single_words)
 	print "Images with similar representations:\t"+ str(len(idx_single_words)-len(single_Set))
-
-print "Null representation images (images with less than "+str(n)+" voc. words):\t" + str(count)
+if n == 1:
+	print "Null representation images (images with all zeros representation):\t" + str(count)
+else:
+	print "Poor representation images (images with less than "+str(n)+" voc. words):\t" + str(count)
