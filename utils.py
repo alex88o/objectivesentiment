@@ -8,6 +8,27 @@ from nltk.corpus import stopwords, sentiwordnet as swn
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
+def mat_dataset_to_dict(dataset):
+	
+	dataset = dataset['RND_DATA']
+	shuffle_no = dataset['shuffle_no'][0][0][0][0]
+	train_set = dataset['train_set'][0][0][0]
+	train_set = [str(int(x)) for x in train_set]
+	train_label = dataset['train_label'][0][0][0]
+
+	test_set = dataset['test_set'][0][0][0]
+	test_set = [str(int(x)) for x in test_set]
+	test_label = dataset['test_label'][0][0][0]
+	
+	D = {}
+	D['shuffle_no'] = shuffle_no
+	D['train_set'] = train_set
+	D['train_label'] = train_label
+	D['test_set'] = test_set
+	D['test_label'] = test_label
+	
+	return D
+
 
 def get_normalized_text(FlickrID, tokens_dir):
 
@@ -92,6 +113,13 @@ def extract_single_senti_scores(word):
 	return pscore, nscore, objscore
 
 
+def is_objective(w):
+	p,n,o = extract_single_senti_scores(w)
+	if o>p and o>n:
+		return True
+	else:
+		return False
+# takes a list of [word, tag]
 def extract_senti_scores(tagged):
 	pscore = 0
 	nscore = 0

@@ -5,7 +5,8 @@
 import sqlite3 as lite
 import json
 import pprint
-from utils import commuteTag, get_normalized_text, extract_single_senti_scores
+from scipy.io import loadmat
+from utils import commuteTag, get_normalized_text, extract_single_senti_scores, mat_dataset_to_dict
 import nltk, sys
 from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer
@@ -113,6 +114,7 @@ def negation_processing(FlickrID):
 	# Extract non-processed words form each image
 	ass_words = extract_raw_words(FlickrID)
 	
+	# Check if the associated word set contains any negation word
 	NEG = len(set(ass_words) & set(['no', 'not', 'but', 'however'])) >0
 	return NEG
 	
@@ -143,6 +145,16 @@ def initialize_freq_vectors(V):
 
 # Load the vocabulary
 
+dataset_split = 1
+split_path = 'Dataset/' + 'shuffleDataset_' + str(dataset_split) + '.mat'
+
+dataset = loadmat(file_name = split_path, chars_as_strings = True)
+#pprint.pprint(dataset)
+
+# Take the list of training images' FlckrIds
+dataset = mat_dataset_to_dict(dataset)
+train_ids = dataset['train_set']
+
 fnameV = 'textVoc.json'
 fV = open(fnameV,'r')
 V = json.loads(fV.read())
@@ -157,6 +169,13 @@ set_cur = set_con.cursor()
 set_cur.execute("SELECT FlickrId FROM Image")
 
 rows = set_cur.fetchall()
+
+# Load the dataset split (list of training images)
+# Filter the images considering only the training ones for the frequencies counting
+#use ONLY the train images to build frequencies
+train_ids = [(unicode(x,"utf-8"),) for x in train_ids]
+rows = list(set(rows) & set(train_ids))
+
 for img_idx, id in enumerate(rows):
 	print "\n\nProcessing image\t" + str(id[0]) + "\t" + str(img_idx) +  "/" + str(len(rows))
 
@@ -168,10 +187,11 @@ for img_idx, id in enumerate(rows):
 	
 	print "Normalized text:"
 	print norm_text
-	sys.exit(0)
+#	sys.exit(0)
 	
 	# Step 4: determine the sentence sentiment and apply negation
-	norm_text = list(set(norm_text)) # do not remove duplicates since we have more and different text sources for each image
+	# Comment the following row to do not remove duplicates (since we have more and different text sources for each image, if a word is repeated it is more likely to be important)
+#	norm_text = list(set(norm_text))
 	posS, negS, nSentiWords = sentenceSentiment(norm_text)
 	
 	# True if the sentence sentiment is positive ( ^ defines the XOR)
@@ -194,11 +214,10 @@ for img_idx, id in enumerate(rows):
 	# Step 5: if the threshold condition is satisified, increment the occurrences of each word in the vocabulary 
 	for w in norm_text:
 		word_idx = V.index(w)
-	#	print w
-	#	pprint.pprint(freq_vectors[word_idx])
-		freq_vectors[word_idx][0] += 1
-	#	pprint.pprint(freq_vectors[word_idx])
+
+		freq_vectors[word_idx][0] += 1			# A. Ortis: this number might be too large compared to the other two frequencies
 	#	_ = raw_input()
+
 		if sentence_influence >= th_sentence:
 			if is_positive:
 				freq_vectors[word_idx][1] += 1	# increment the frequency of word w in a positive sentence
@@ -210,9 +229,9 @@ for img_idx, id in enumerate(rows):
 
 # Step 6: store the frequences for the word in the vocabulary
 
-pprint.pprint(freq_vectors[0])
-pprint.pprint(freq_vectors[1000])
-pprint.pprint(freq_vectors[-1])
+#pprint.pprint(freq_vectors[0])
+#pprint.pprint(freq_vectors[1000])
+#pprint.pprint(freq_vectors[-1])
 
 new_fname = 'freqVectors.json'
 f = open(new_fname,'w')
